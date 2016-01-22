@@ -7,6 +7,50 @@ from urllib.error import HTTPError
 from bs4 import BeautifulSoup
 
 
+def get_tags():
+	# 获取豆瓣电影分类标签
+	tagList = []
+	url = "http://movie.douban.com/tag/"
+	try:
+		r = requests.get(url)
+	except Exception as e:
+		raise e
+	else:
+		bsObj = BeautifulSoup(r.content, 'html.parser')
+		tabList = bsObj.findAll('table', {'class':'tagCol'})
+		for tab in tabList:
+			for td in tab.tbody.findAll('td'):
+				tagList.append(td.a.text)
+		return tagList
+
+
+def get_movies(start, limit=10, topic_id, topic_name):
+	# 获取某分类下的电影信息
+	movieList = []
+	url = "https://www.douban.com/j/tag/items"
+	params = {'start':start, 'limit':limit, 'topic_id':topic_id, 'topic_name':topic_name, 'mod':'movie'}
+	try:
+		r = requests.get(url, params=params)
+	except Exception as e:
+		raise e
+	else:
+		obj = r.json()
+		html = obj.get('html')
+		bsObj = BeautifulSoup(html, 'html.parser')
+		dList = bsObj.findAll('dl')
+		for dl in dList:
+			movieObj = {}
+			movieObj['name'] = dl.dd.find('a', {'class':'title'}).text
+			movieObj['link'] = dl.dd.find('a', {'class':'title'}).get('href')
+			movieObj['desc'] = dl.dd.find('div', {'class':'desc'}).text
+			movieObj['rating'] = dl.dd.find('span', {'class':'rating_nums'}).text
+			movieObj['imgLink'] = dl.dt.find('img').get('src')
+			movieList.append(movieObj)
+		return movieList
+
+
+
+
 def get_tag_table():
 	# 获取豆瓣电影分类标签中的分类列表
 	try:
