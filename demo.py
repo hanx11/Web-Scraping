@@ -52,6 +52,7 @@ connection = pymysql.connect(host='localhost',
 
 
 def add_movie_record(movie):
+	# 将电影信息添加到数据表中
 	try:
 		name = movie['name'].strip(' ')
 		link = movie['link'].strip(' ')
@@ -65,6 +66,15 @@ def add_movie_record(movie):
 	except Exception as e:
 		raise e
 
+def is_existed(movie):
+	# 判断该部电影是否已存在于数据库中
+	try:
+		with connection.cursor() as cursor:
+			sql = "select now();"
+			result = cursor.execute(sql).fetchone()
+			print(result)
+	except Exception as e:
+		raise e
 
 def get_tags():
 	# 获取豆瓣电影分类标签
@@ -85,8 +95,8 @@ def get_tags():
 
 
 def get_movies(params):
+	# 根据参数获取豆瓣电影信息
 	movieList = []
-	params = params
 	url = "https://www.douban.com/j/tag/items"
 	# params = {'start':start, 'limit':limit, 'topic_id':topic_id, 'topic_name':topic_name, 'mod':'movie'}
 	try:
