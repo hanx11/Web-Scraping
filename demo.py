@@ -53,11 +53,11 @@ connection = pymysql.connect(host='localhost',
 
 def add_movie_record(movie):
 	try:
-		name = movie['name']
-		link = movie['link']
-		movie_desc = movie['desc']
-		rating = movie['rating']
-		imglink = movie['imgLink']
+		name = movie['name'].strip(' ')
+		link = movie['link'].strip(' ')
+		movie_desc = movie['desc'].strip(' ')
+		rating = movie['rating'].strip(' ')
+		imglink = movie['imgLink'].strip(' ')
 		with connection.cursor() as cursor:
 			sql = "INSERT INTO douban_movies VALUES (%s, %s, %s, %s, %s);"
 			cursor.execute(sql, (name, link, movie_desc, rating, imglink))
