@@ -3,6 +3,7 @@
 
 import json
 import requests
+import pymysql.cursors
 from bs4 import BeautifulSoup
 import pdb
 
@@ -40,6 +41,30 @@ topic = [
 			{'topic_id':'62388', 'topic_name':'烂片'},
 			{'topic_id':'62389', 'topic_name':'cult'}
 		]
+
+# Connect to the database
+connection = pymysql.connect(host='localhost',
+                            user='root',
+                            password='hanfeng',
+                            db='douban_db',
+                            charset='utf8mb4',
+                            cursorclass=pymysql.cursors.DictCursor)
+
+
+def add_movie_record(movie):
+	try:
+		name = movie['name']
+		link = movie['link']
+		movie_desc = movie['desc']
+		rating = movie['rating']
+		imglink = movie['imgLink']
+		with connection.cursor() as cursor:
+			sql = "INSERT INTO douban_movies VALUES (%s, %s, %s, %s, %s);"
+			cursor.execute(sql, (name, link, movie_desc, rating, imglink))
+		connection.commit()
+	except Exception as e:
+		raise e
+
 
 def get_tags():
 	# 获取豆瓣电影分类标签
@@ -95,7 +120,10 @@ def main():
 			# pdb.set_trace()
 			params = {'start':s, 'limit':10, 'topic_id':topic_id, 'topic_name':topic_name, 'mod':'movie' }
 			movies = get_movies(params)
-			print(movies[0])
+			for m in movies:
+				add_movie_record(m)
+				print(m)
+
 
 if __name__ == '__main__':
 	main()

@@ -14,10 +14,10 @@ connection = pymysql.connect(host='localhost',
 try:
     with connection.cursor() as cursor:
         sql = '''create table douban_movies (
-                        name varchar(64),
-                        link varchar(128),
-                        movie_desc varchar(64),
-                        rating char(2),
+                        name varchar(128),
+                        link varchar(512),
+                        movie_desc varchar(512),
+                        rating varchar(4),
                         imglink varchar(128)
                     );
                '''
