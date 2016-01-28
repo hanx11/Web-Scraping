@@ -70,9 +70,13 @@ def is_existed(movie):
 	# 判断该部电影是否已存在于数据库中
 	try:
 		with connection.cursor() as cursor:
-			sql = "SELECT name FROM douban_movies WHERE name='%s';"
-			result = cursor.execute(sql, movie.name).fetchone()
-			print(result)
+			sql = "SELECT name FROM douban_movies WHERE name=%s;"
+			cursor.execute(sql, movie['name'])
+			result = cursor.fetchone()
+			if result is None:
+				return True
+			else:
+				return False
 	except Exception as e:
 		raise e
 
@@ -91,7 +95,6 @@ def get_tags():
 			for td in tab.tbody.findAll('td'):
 				tagList.append(td.a.text)
 		return tagList
-
 
 def get_movies(params):
 	# 根据参数获取豆瓣电影信息
@@ -130,9 +133,11 @@ def main():
 			params = {'start':s, 'limit':10, 'topic_id':topic_id, 'topic_name':topic_name, 'mod':'movie' }
 			movies = get_movies(params)
 			for m in movies:
-				is_existed(m)
-				add_movie_record(m)
-				print(m)
+				if is_existed(m):
+					add_movie_record(m)
+					print(m)
+				else:
+					continue
 
 
 if __name__ == '__main__':
