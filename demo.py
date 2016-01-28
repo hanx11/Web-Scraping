@@ -129,7 +129,6 @@ def main():
 		topic_id = t['topic_id']
 		topic_name = t['topic_name']
 		for s in range(0, 1000, 10):
-			# pdb.set_trace()
 			params = {'start':s, 'limit':10, 'topic_id':topic_id, 'topic_name':topic_name, 'mod':'movie' }
 			movies = get_movies(params)
 			for m in movies:
