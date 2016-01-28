@@ -70,8 +70,8 @@ def is_existed(movie):
 	# 判断该部电影是否已存在于数据库中
 	try:
 		with connection.cursor() as cursor:
-			sql = "select now();"
-			result = cursor.execute(sql).fetchone()
+			sql = "SELECT name FROM douban_movies WHERE name='%s';"
+			result = cursor.execute(sql, movie.name).fetchone()
 			print(result)
 	except Exception as e:
 		raise e
@@ -91,7 +91,6 @@ def get_tags():
 			for td in tab.tbody.findAll('td'):
 				tagList.append(td.a.text)
 		return tagList
-
 
 
 def get_movies(params):
@@ -131,6 +130,7 @@ def main():
 			params = {'start':s, 'limit':10, 'topic_id':topic_id, 'topic_name':topic_name, 'mod':'movie' }
 			movies = get_movies(params)
 			for m in movies:
+				is_existed(m)
 				add_movie_record(m)
 				print(m)
 
