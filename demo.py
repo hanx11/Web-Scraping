@@ -80,22 +80,6 @@ def is_existed(movie):
 	except Exception as e:
 		raise e
 
-def get_tags():
-	# 获取豆瓣电影分类标签
-	tagList = []
-	url = "http://movie.douban.com/tag/"
-	try:
-		r = requests.get(url)
-	except Exception as e:
-		raise e
-	else:
-		bsObj = BeautifulSoup(r.content, 'html.parser')
-		tabList = bsObj.findAll('table', {'class':'tagCol'})
-		for tab in tabList:
-			for td in tab.tbody.findAll('td'):
-				tagList.append(td.a.text)
-		return tagList
-
 def get_movies(params):
 	# 根据参数获取豆瓣电影信息
 	movieList = []
