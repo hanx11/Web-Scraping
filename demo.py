@@ -100,13 +100,20 @@ def get_movies(params):
 	# 根据参数获取豆瓣电影信息
 	movieList = []
 	url = "https://www.douban.com/j/tag/items"
+	headers = {
+		'content-type': 'application/json',
+		'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36',
+	}
 	# params = {'start':start, 'limit':limit, 'topic_id':topic_id, 'topic_name':topic_name, 'mod':'movie'}
 	try:
-		r = requests.get(url, params=params)
+		response = requests.get(url, params=params, headers=headers)
+		response.raise_for_status()
+		# pdb.set_trace()
 	except Exception as e:
 		raise e
 	else:
-		obj = r.json()
+		# pdb.set_trace()
+		obj = response.json()
 		html = obj.get('html')
 		bsObj = BeautifulSoup(html, 'html.parser')
 		dList = bsObj.findAll('dl')
@@ -136,6 +143,7 @@ def main():
 					add_movie_record(m)
 					print(m)
 				else:
+					print("This record has been in douban_movies table.")
 					continue
 
 
