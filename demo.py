@@ -127,7 +127,7 @@ def main():
 					add_movie_record(m)
 					print(m)
 				else:
-					print("This record has been in douban_movies table.")
+					print("This record has been in the douban_movies table.")
 					continue
 
 
