@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 
+import json
 import requests
-from urllib.request import urlopen
-from urllib.error import HTTPError
+import pymysql.cursors
 from bs4 import BeautifulSoup
+import pdb
 
 topic = [
 			{'topic_id':'60443', 'topic_name':'爱情'},
@@ -41,7 +42,44 @@ topic = [
 			{'topic_id':'62389', 'topic_name':'cult'}
 		]
 
-		
+# Connect to the database
+connection = pymysql.connect(host='localhost',
+                            user='root',
+                            password='hanfeng',
+                            db='douban_db',
+                            charset='utf8mb4',
+                            cursorclass=pymysql.cursors.DictCursor)
+
+
+def add_movie_record(movie):
+	# 将电影信息添加到数据表中
+	try:
+		name = movie['name'].strip(' ')
+		link = movie['link'].strip(' ')
+		movie_desc = movie['desc'].strip(' ')
+		rating = movie['rating'].strip(' ')
+		imglink = movie['imgLink'].strip(' ')
+		with connection.cursor() as cursor:
+			sql = "INSERT INTO douban_movies VALUES (%s, %s, %s, %s, %s);"
+			cursor.execute(sql, (name, link, movie_desc, rating, imglink))
+		connection.commit()
+	except Exception as e:
+		raise e
+
+def is_existed(movie):
+	# 判断该部电影是否已存在于数据库中
+	try:
+		with connection.cursor() as cursor:
+			sql = "SELECT name FROM douban_movies WHERE name=%s;"
+			cursor.execute(sql, movie['name'])
+			result = cursor.fetchone()
+			if result is None:
+				return True
+			else:
+				return False
+	except Exception as e:
+		raise e
+
 def get_tags():
 	# 获取豆瓣电影分类标签
 	tagList = []
@@ -58,72 +96,57 @@ def get_tags():
 				tagList.append(td.a.text)
 		return tagList
 
-
-def get_movies(start, limit=10, topic_id, topic_name):
-	# 获取某分类下的电影信息
+def get_movies(params):
+	# 根据参数获取豆瓣电影信息
 	movieList = []
 	url = "https://www.douban.com/j/tag/items"
-	params = {'start':start, 'limit':limit, 'topic_id':topic_id, 'topic_name':topic_name, 'mod':'movie'}
+	headers = {
+		'content-type': 'application/json',
+		'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36',
+	}
+	# params = {'start':start, 'limit':limit, 'topic_id':topic_id, 'topic_name':topic_name, 'mod':'movie'}
 	try:
-		r = requests.get(url, params=params)
+		response = requests.get(url, params=params, headers=headers)
+		response.raise_for_status()
+		# pdb.set_trace()
 	except Exception as e:
 		raise e
 	else:
-		obj = r.json()
+		# pdb.set_trace()
+		obj = response.json()
 		html = obj.get('html')
 		bsObj = BeautifulSoup(html, 'html.parser')
 		dList = bsObj.findAll('dl')
 		for dl in dList:
-			movieObj = {}
-			movieObj['name'] = dl.dd.find('a', {'class':'title'}).text
-			movieObj['link'] = dl.dd.find('a', {'class':'title'}).get('href')
-			movieObj['desc'] = dl.dd.find('div', {'class':'desc'}).text
-			movieObj['rating'] = dl.dd.find('span', {'class':'rating_nums'}).text
-			movieObj['imgLink'] = dl.dt.find('img').get('src')
-			movieList.append(movieObj)
+			try:
+				movieObj = {}
+				movieObj['name'] = dl.dd.find('a', {'class':'title'}).text
+				movieObj['link'] = dl.dd.find('a', {'class':'title'}).get('href')
+				movieObj['desc'] = dl.dd.find('div', {'class':'desc'}).text
+				movieObj['rating'] = dl.dd.find('span', {'class':'rating_nums'}).text
+				movieObj['imgLink'] = dl.dt.find('img').get('src')
+				movieList.append(movieObj)
+			except Exception as e:
+				continue
 		return movieList
 
 
-
-
-def get_tag_table():
-	# 获取豆瓣电影分类标签中的分类列表
-	try:
-		response = requests.get('https://movie.douban.com/tag/')
-	except Exception as e:
-		raise e
-	else:
-		bsObj = BeautifulSoup(response.content, 'html.parser')
-		tableList =  bsObj.findAll('table', {'class':'tagCol'})
-		return tableList
-
-
-def get_tag_link_list(tableList):
-	# 获取豆瓣电影分类标签页中的各分类列表中的链接url
-	tag_link_list = set()
-	for table in tableList:
-		tmplist = table.tbody.findAll('a')
-		for link in tmplist:
-			tag_link_list.add(link.get('href'))
-	return tag_link_list
-
-# link_list = get_tag_link_list()
-# for link in link_list:
-# 	try:
-# 		response = urlopen(link.encode('utf-8'))
-# 	except HTTPError as e:
-# 		raise e
-# 	else:
-# 		html = response.read()
-# 		bsObj = BeautifulSoup(html, 'html.parser')
-# 		print(bsObj.prettify())
-
-
 def main():
-	tableList = get_tag_table()
-	linkList = get_tag_link_list(tableList)
-	for link in linkList:
-		print(link)
+	for t in topic:
+		topic_id = t['topic_id']
+		topic_name = t['topic_name']
+		for s in range(0, 1000, 10):
+			params = {'start':s, 'limit':10, 'topic_id':topic_id, 'topic_name':topic_name, 'mod':'movie' }
+			movies = get_movies(params)
+			for m in movies:
+				if is_existed(m):
+					add_movie_record(m)
+					print(m)
+				else:
+					print("This record has been in douban_movies table.")
+					continue
+
 
 if __name__ == '__main__':
 	main()
+
